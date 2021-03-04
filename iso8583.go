@@ -47,6 +47,19 @@ func (iso *IsoStruct) ToString() (string, error) {
 	if err != nil {
 		return str, err
 	}
+
+	if iso.Spec.fields[0].HeaderHex {
+		mtiByte, _ := hex.DecodeString(iso.Mti.String())
+
+		var bitmapByte []byte
+		if iso.Spec.fields[1].HeaderHex {
+			bitmapByte, _ = hex.DecodeString(bitmapString)
+		}
+
+		isomsgByte := append(mtiByte, bitmapByte...)
+		return string(isomsgByte) + elementsStr, nil
+	}
+
 	str = iso.Mti.String() + bitmapString + elementsStr
 	return str, nil
 }
@@ -75,7 +88,7 @@ func (iso *IsoStruct) AddField(field int64, data string) error {
 }
 
 // Parse parses an iso8583 string
-func (iso *IsoStruct) Parse(i string, useTpdu bool, isStr bool) (IsoStruct, error) {
+func (iso *IsoStruct) Parse(i string, useTpdu bool) (IsoStruct, error) {
 	var q IsoStruct
 	spec := iso.Spec
 	var msg string
@@ -92,8 +105,8 @@ func (iso *IsoStruct) Parse(i string, useTpdu bool, isStr bool) (IsoStruct, erro
 	}
 	fmt.Printf("tpdu: %v", tpdu)
 
-	mti, rest := extractMTI(msg, isStr)
-	bitmap, elementString, err := extractBitmap(rest, isStr)
+	mti, rest := extractMTI(msg, spec.fields[0].HeaderHex)
+	bitmap, elementString, err := extractBitmap(rest, spec.fields[1].HeaderHex)
 
 	if err != nil {
 		return q, err
@@ -125,7 +138,15 @@ func (iso *IsoStruct) packElements() (string, error) {
 			field := int64(index + 1)
 			fieldDescription := elementsSpec.fields[int(field)]
 			if fieldDescription.LenType == "fixed" {
-				str = str + elementsMap[field]
+
+				if fieldDescription.HeaderHex {
+					strtemp := elementsMap[field]
+					strByte, _ := hex.DecodeString(strtemp)
+					str = str + string(strByte)
+				} else {
+					str = str + elementsMap[field]
+				}
+
 			} else {
 				lengthType, err := getVariableLengthFromString(fieldDescription.LenType)
 				if err != nil {
@@ -133,7 +154,15 @@ func (iso *IsoStruct) packElements() (string, error) {
 				}
 				actualLength := len(elementsMap[field])
 				paddedLength := leftPad(strconv.Itoa(actualLength), int(lengthType), "0")
-				str = str + (paddedLength + elementsMap[field])
+
+				if fieldDescription.HeaderHex {
+					strtemp := (paddedLength + elementsMap[field])
+					strByte, _ := hex.DecodeString(strtemp)
+					str = str + string(strByte)
+				} else {
+					str = str + elementsMap[field]
+				}
+
 			}
 		}
 	}
@@ -150,9 +179,9 @@ func extractTpdu(rest string) ([]byte, string, error) {
 }
 
 // extractMTI extracts the mti from an iso8583 string
-func extractMTI(str string, isStr bool) (MtiType, string) {
+func extractMTI(str string, isHex bool) (MtiType, string) {
 
-	if isStr {
+	if !isHex {
 		mti := str[0:4]
 		rest := str[4:len(str)]
 
@@ -165,13 +194,13 @@ func extractMTI(str string, isStr bool) (MtiType, string) {
 	}
 }
 
-func extractBitmap(rest string, isStr bool) ([]int64, string, error) {
+func extractBitmap(rest string, isHex bool) ([]int64, string, error) {
 	var bitmap []int64
 	var elementsString string
 	var inDec []byte
 	var err error
 
-	if isStr {
+	if !isHex {
 		// remove first two characters
 		frontHex := rest[0:2]
 		//fmt.Println(frontHex)
@@ -204,12 +233,12 @@ func extractBitmap(rest string, isStr bool) ([]int64, string, error) {
 		bitmapHexLength = 16
 	}
 
-	if !isStr {
+	if isHex {
 		bitmapHexLength = bitmapHexLength / 2
 	}
 
 	var bitmapHexString string
-	if isStr {
+	if !isHex {
 		bitmapHexString = rest[0:bitmapHexLength]
 	} else {
 		bitmapHexByte := hex.EncodeToString([]byte(rest[0:bitmapHexLength]))

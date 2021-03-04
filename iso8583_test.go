@@ -1,6 +1,7 @@
 package iso8583
 
 import (
+	"encoding/hex"
 	"fmt"
 	"testing"
 )
@@ -44,7 +45,7 @@ func TestISOParseByte(t *testing.T) {
 
 	isomsg := string(isobyte)
 	isostruct := NewISOStruct("spec1987pos.yml", true)
-	parsed, err := isostruct.Parse(isomsg, true, false)
+	parsed, err := isostruct.Parse(isomsg, true)
 	if err != nil {
 		fmt.Println(err)
 		t.Errorf("parse iso message failed")
@@ -72,7 +73,7 @@ func TestISOParse(t *testing.T) {
 	// Field (49) = 840
 	isomsg := "02003220000000808000000010000000001500120604120000000112340001840"
 	isostruct := NewISOStruct("spec1987.yml", true)
-	parsed, err := isostruct.Parse(isomsg, false, true)
+	parsed, err := isostruct.Parse(isomsg, false)
 	if err != nil {
 		fmt.Println(err)
 		t.Errorf("parse iso message failed")
@@ -117,6 +118,7 @@ func TestEmptyPos(t *testing.T) {
 		t.Errorf("Empty generates invalid MTI")
 	}
 	one.AddMTI("0200")
+	one.Tpdu = []byte{96, 0, 50, 0, 0}
 	one.AddField(3, "000010")
 	one.AddField(4, "000000001500")
 	one.AddField(7, "1206041200")
@@ -124,9 +126,12 @@ func TestEmptyPos(t *testing.T) {
 	one.AddField(41, "12340001")
 	one.AddField(49, "840")
 
-	expected := "02003220000000808000000010000000001500120604120000000112340001840"
+	dataByte, _ := hex.DecodeString("0200322000000080800000001000000000150031323036303431323030000001")
+	expected := "12340001840"
+	expected = string(dataByte) + expected
+
 	unpacked, _ := one.ToString()
 	if unpacked != expected {
-		t.Errorf("Manually constructed isostruct produced %s not %s", unpacked, expected)
+		t.Errorf("Manually constructed isostruct produced %x not %x", []byte(unpacked), []byte(expected))
 	}
 }

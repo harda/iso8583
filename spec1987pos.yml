@@ -3,11 +3,13 @@
   Label: Message Type Indicator
   LenType: fixed
   MaxLen: 4
+  HeaderHex: true
 1:
   ContentType: "b"
   Label: Bitmap
   LenType: fixed
   MaxLen: 8
+  HeaderHex: true
 2:
   ContentType: "n"
   Label: Primary account number (PAN)
