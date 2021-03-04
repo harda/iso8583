@@ -13,6 +13,8 @@ type FieldDescription struct {
 	MinLen      int    `yaml:"MinLen"`
 	LenType     string `yaml:"LenType"`
 	Label       string `yaml:"Label"`
+	HeaderHex   bool   `yaml:"HeaderHex"`
+	Contain     string `yaml:"Contain"`
 }
 
 // Spec contains a strutured description of an iso8583 spec

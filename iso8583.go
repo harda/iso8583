@@ -32,6 +32,7 @@ type IsoStruct struct {
 	Mti      MtiType
 	Bitmap   []int64
 	Elements ElementsType
+	Tpdu     []byte
 }
 
 // ToString packs the mti, bitmap and elements into a string
@@ -74,11 +75,25 @@ func (iso *IsoStruct) AddField(field int64, data string) error {
 }
 
 // Parse parses an iso8583 string
-func (iso *IsoStruct) Parse(i string) (IsoStruct, error) {
+func (iso *IsoStruct) Parse(i string, useTpdu bool, isStr bool) (IsoStruct, error) {
 	var q IsoStruct
 	spec := iso.Spec
-	mti, rest := extractMTI(i)
-	bitmap, elementString, err := extractBitmap(rest)
+	var msg string
+	var tpdu []byte
+
+	if useTpdu {
+		var err error
+		tpdu, msg, err = extractTpdu(i)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+	} else {
+		msg = i
+	}
+	fmt.Printf("tpdu: %v", tpdu)
+
+	mti, rest := extractMTI(msg, isStr)
+	bitmap, elementString, err := extractBitmap(rest, isStr)
 
 	if err != nil {
 		return q, err
@@ -95,7 +110,7 @@ func (iso *IsoStruct) Parse(i string) (IsoStruct, error) {
 		return q, err
 	}
 
-	q = IsoStruct{Spec: spec, Mti: mti, Bitmap: bitmap, Elements: elements}
+	q = IsoStruct{Spec: spec, Mti: mti, Bitmap: bitmap, Elements: elements, Tpdu: tpdu}
 	return q, nil
 }
 
@@ -125,24 +140,53 @@ func (iso *IsoStruct) packElements() (string, error) {
 	return str, nil
 }
 
-// extractMTI extracts the mti from an iso8583 string
-func extractMTI(str string) (MtiType, string) {
-	mti := str[0:4]
-	rest := str[4:len(str)]
+func extractTpdu(rest string) ([]byte, string, error) {
 
-	return MtiType{mti: mti}, rest
+	frontHex := rest[0:5]
+	tpdu := []byte(frontHex)
+	msg := rest[5:len(rest)]
+
+	return tpdu, msg, nil
 }
 
-func extractBitmap(rest string) ([]int64, string, error) {
+// extractMTI extracts the mti from an iso8583 string
+func extractMTI(str string, isStr bool) (MtiType, string) {
+
+	if isStr {
+		mti := str[0:4]
+		rest := str[4:len(str)]
+
+		return MtiType{mti: mti}, rest
+	} else {
+		mti := hex.EncodeToString([]byte(str[0:2]))
+		rest := str[2:len(str)]
+
+		return MtiType{mti: string(mti)}, rest
+	}
+}
+
+func extractBitmap(rest string, isStr bool) ([]int64, string, error) {
 	var bitmap []int64
 	var elementsString string
+	var inDec []byte
+	var err error
 
-	// remove first two characters
-	frontHex := rest[0:2]
-	//fmt.Println(frontHex)
-	inDec, err := hex.DecodeString(frontHex)
-	if err != nil {
-		return bitmap, elementsString, err
+	if isStr {
+		// remove first two characters
+		frontHex := rest[0:2]
+		//fmt.Println(frontHex)
+		inDec, err = hex.DecodeString(frontHex)
+		if err != nil {
+			return bitmap, elementsString, err
+		}
+	} else {
+		// remove first characters
+		frontHex := hex.EncodeToString([]byte(rest[0:1]))
+		//fmt.Println(frontHex)
+		inDec, err = hex.DecodeString(string(frontHex))
+		if err != nil {
+			return bitmap, elementsString, err
+		}
 	}
 
 	inBinary := fmt.Sprintf("%8b", inDec[0])
@@ -160,7 +204,18 @@ func extractBitmap(rest string) ([]int64, string, error) {
 		bitmapHexLength = 16
 	}
 
-	bitmapHexString := rest[0:bitmapHexLength]
+	if !isStr {
+		bitmapHexLength = bitmapHexLength / 2
+	}
+
+	var bitmapHexString string
+	if isStr {
+		bitmapHexString = rest[0:bitmapHexLength]
+	} else {
+		bitmapHexByte := hex.EncodeToString([]byte(rest[0:bitmapHexLength]))
+		bitmapHexString = string(bitmapHexByte)
+	}
+
 	elementsString = rest[bitmapHexLength:len(rest)]
 
 	bitmap, err = HexToBitmapArray(bitmapHexString)
@@ -190,26 +245,73 @@ func extractFieldFromElements(spec Spec, field int, str string) (string, string,
 	fieldDescription := spec.fields[int(field)]
 
 	if fieldDescription.LenType == "fixed" {
-		extractedField = str[0:fieldDescription.MaxLen]
-		substr = str[fieldDescription.MaxLen:len(str)]
+
+		extractedField, substr = getFieldValue(fieldDescription.HeaderHex, fieldDescription.MaxLen, fieldDescription.Contain, str)
+
 	} else {
 		// varianle length fields have their lengths embedded into the string
 		length, err := getVariableLengthFromString(fieldDescription.LenType)
 		if err != nil {
 			return extractedField, substr, fmt.Errorf("spec error: field %d: %s", field, err.Error())
 		}
-		fieldLength := str[0:length]       // get the embedded length
+
+		var fieldLength string
+		if fieldDescription.HeaderHex {
+			if length%2 != 0 {
+				length = (length + 1) / 2
+			} else {
+				length = length / 2
+			}
+
+			fieldLength1 := hex.EncodeToString([]byte(str[0:length]))
+			fieldLength = string(fieldLength1)
+
+		} else {
+			fieldLength = str[0:length] // get the embedded length
+		}
 		tempSubstr := str[length:len(str)] // get the string with the length removed
+
 		fieldLengthInt, err := strconv.ParseInt(fieldLength, 10, 64)
 		if err != nil {
 			return extractedField, substr, err
 		}
 
-		extractedField = tempSubstr[0:fieldLengthInt]
-		substr = tempSubstr[fieldLengthInt:len(tempSubstr)]
+		if fieldDescription.Contain == "string" {
+			fieldLengthInt = fieldLengthInt * 2
+		}
+
+		extractedField, substr = getFieldValue(fieldDescription.HeaderHex, int(fieldLengthInt), fieldDescription.Contain, tempSubstr)
+
 	}
 
 	return extractedField, substr, nil
+}
+
+func getFieldValue(headerHex bool, maxLen int, contain string, str string) (extractedField string, substr string) {
+	if headerHex {
+		var length int
+		if maxLen%2 != 0 {
+			length = (maxLen + 1) / 2
+		} else {
+			length = maxLen / 2
+		}
+
+		//if xxxvar chip, length di x 2
+		if contain == "chip-tag" {
+			length = length * 2
+		}
+
+		extractedFieldTemp := str[0:length]
+		extractedFieldTemp2 := hex.EncodeToString([]byte(extractedFieldTemp))
+		extractedField = string(extractedFieldTemp2)
+
+		substr = str[length:len(str)]
+	} else {
+		extractedField = str[0:maxLen]
+		substr = str[maxLen:len(str)]
+	}
+
+	return extractedField, substr
 }
 
 func unpackElements(bitmap []int64, elements string, spec Spec) (ElementsType, error) {
@@ -256,6 +358,11 @@ func NewISOStruct(filename string, secondaryBitmap bool) IsoStruct {
 	if err != nil {
 		panic(err) // we panic because we don't want to do anything without a valid specfile
 	}
-	iso = IsoStruct{Spec: spec, Mti: mti, Bitmap: bitmap, Elements: elements}
+
+	var tpdu []byte
+	tpdu = make([]byte, 5)
+	fmt.Printf("tpdu: %#v", tpdu)
+
+	iso = IsoStruct{Spec: spec, Mti: mti, Bitmap: bitmap, Elements: elements, Tpdu: tpdu}
 	return iso
 }
