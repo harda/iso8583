@@ -70,16 +70,19 @@
   Label: Time, local transaction (hhmmss)
   LenType: fixed
   MaxLen: 6
+  HeaderHex: true
 13:
   ContentType: "n"
   Label: Date, local transaction (MMDD)
   LenType: fixed
   MaxLen: 4
+  HeaderHex: true
 14:
   ContentType: "n"
   Label: Date, expiration
   LenType: fixed
   MaxLen: 4
+  HeaderHex: true
 15:
   ContentType: "n"
   Label: Date, settlement
