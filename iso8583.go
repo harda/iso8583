@@ -87,6 +87,15 @@ func (iso *IsoStruct) AddField(field int64, data string) error {
 	return nil
 }
 
+func (iso *IsoStruct) RemoveField(field int64) error {
+	if field < 2 || field > int64(len(iso.Bitmap)) {
+		return fmt.Errorf("expected field to be between %d and %d found %d instead", 2, len(iso.Bitmap), field)
+	}
+	iso.Bitmap[field-1] = 0
+	iso.Elements.elements[field] = ""
+	return nil
+}
+
 // Parse parses an iso8583 string
 func (iso *IsoStruct) Parse(i string, useTpdu bool) (IsoStruct, error) {
 	var q IsoStruct
