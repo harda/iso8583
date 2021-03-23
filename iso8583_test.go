@@ -4,6 +4,8 @@ import (
 	"encoding/hex"
 	"fmt"
 	"testing"
+
+	"github.com/harda/iso8583"
 )
 
 func TestISOParseByte(t *testing.T) {
@@ -66,17 +68,17 @@ func TestISOParseByte(t *testing.T) {
 func TestISOParseInt(t *testing.T) {
 
 	isobyte := []byte{
-		96,0,50,0,0,4,0,112,36,7,128,0,192,2,100,22,83,4,135,32,0,0,8,72,0,0,0,0,0,0,2,1,0,0,1,32,35,6,0,81,0,1,0,50,0,55,55,
-		48,48,48,48,48,54,48,48,48,48,48,56,55,55,48,48,48,48,48,48,54,1,87,95,42,2,3,96,130,2,116,0,132,7,160,0,0,6,2,16,16,
-		149,5,8,0,4,136,0,154,3,33,3,22,156,1,0,159,2,6,0,0,0,2,1,0,159,3,6,0,0,0,0,0,0,159,9,2,1,0,159,16,28,159,1,160,0,128,
-		0,0,145,243,17,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,159,26,2,3,96,159,30,8,53,49,52,54,51,51,57,53,159,38,8,235,72,167,
-		52,131,92,159,216,159,39,1,128,159,51,3,224,248,200,159,52,3,2,0,0,159,53,1,34,159,54,2,3,179,159,55,4,253,168,58,116,
-		159,65,4,0,0,1,32,159,83,1,82,0,17,223,1,8,53,49,52,54,51,51,57,53,1,96,180,3,220,58,211,55,110,201,198,159,188,92,177,
-		104,150,181,7,86,112,228,200,27,244,118,252,59,125,47,215,14,125,202,49,36,240,155,38,232,2,88,128,49,253,147,102,189,55,
-		148,50,71,79,223,3,37,119,62,178,98,90,163,211,181,42,32,79,139,96,10,66,115,42,231,190,76,66,68,225,96,127,29,4,224,83,151,
-		57,40,246,53,27,27,124,91,221,13,110,13,3,46,55,127,198,230,71,215,105,129,198,121,216,234,55,187,227,241,187,188,246,112,8,
-		203,40,214,90,94,229,75,185,143,93,73,69,151,158,122,57,169,227,38,88,231,185,171,231,2,239,112,114,67,130,59,176,202,13,249,
-		81,30,22,38,236,68,0,6,52,48,48,48,48,56}
+		96, 0, 50, 0, 0, 4, 0, 112, 36, 7, 128, 0, 192, 2, 100, 22, 83, 4, 135, 32, 0, 0, 8, 72, 0, 0, 0, 0, 0, 0, 2, 1, 0, 0, 1, 32, 35, 6, 0, 81, 0, 1, 0, 50, 0, 55, 55,
+		48, 48, 48, 48, 48, 54, 48, 48, 48, 48, 48, 56, 55, 55, 48, 48, 48, 48, 48, 48, 54, 1, 87, 95, 42, 2, 3, 96, 130, 2, 116, 0, 132, 7, 160, 0, 0, 6, 2, 16, 16,
+		149, 5, 8, 0, 4, 136, 0, 154, 3, 33, 3, 22, 156, 1, 0, 159, 2, 6, 0, 0, 0, 2, 1, 0, 159, 3, 6, 0, 0, 0, 0, 0, 0, 159, 9, 2, 1, 0, 159, 16, 28, 159, 1, 160, 0, 128,
+		0, 0, 145, 243, 17, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 159, 26, 2, 3, 96, 159, 30, 8, 53, 49, 52, 54, 51, 51, 57, 53, 159, 38, 8, 235, 72, 167,
+		52, 131, 92, 159, 216, 159, 39, 1, 128, 159, 51, 3, 224, 248, 200, 159, 52, 3, 2, 0, 0, 159, 53, 1, 34, 159, 54, 2, 3, 179, 159, 55, 4, 253, 168, 58, 116,
+		159, 65, 4, 0, 0, 1, 32, 159, 83, 1, 82, 0, 17, 223, 1, 8, 53, 49, 52, 54, 51, 51, 57, 53, 1, 96, 180, 3, 220, 58, 211, 55, 110, 201, 198, 159, 188, 92, 177,
+		104, 150, 181, 7, 86, 112, 228, 200, 27, 244, 118, 252, 59, 125, 47, 215, 14, 125, 202, 49, 36, 240, 155, 38, 232, 2, 88, 128, 49, 253, 147, 102, 189, 55,
+		148, 50, 71, 79, 223, 3, 37, 119, 62, 178, 98, 90, 163, 211, 181, 42, 32, 79, 139, 96, 10, 66, 115, 42, 231, 190, 76, 66, 68, 225, 96, 127, 29, 4, 224, 83, 151,
+		57, 40, 246, 53, 27, 27, 124, 91, 221, 13, 110, 13, 3, 46, 55, 127, 198, 230, 71, 215, 105, 129, 198, 121, 216, 234, 55, 187, 227, 241, 187, 188, 246, 112, 8,
+		203, 40, 214, 90, 94, 229, 75, 185, 143, 93, 73, 69, 151, 158, 122, 57, 169, 227, 38, 88, 231, 185, 171, 231, 2, 239, 112, 114, 67, 130, 59, 176, 202, 13, 249,
+		81, 30, 22, 38, 236, 68, 0, 6, 52, 48, 48, 48, 48, 56}
 
 	isomsg := string(isobyte)
 	isostruct := NewISOStruct("spec1987pos.yml", true)
@@ -169,4 +171,146 @@ func TestEmptyPos(t *testing.T) {
 	if unpacked != expected {
 		t.Errorf("Manually constructed isostruct produced %x not %x", []byte(unpacked), []byte(expected))
 	}
+}
+
+func TestMessageFromSample1(t *testing.T) {
+
+	isobyte, _ := hex.DecodeString("60001800000800202001000080000492000000029900183737303030303333003748544c45303331303031303031373730303030333330303030303030378ca64de98ca64de9")
+
+	isomsg := string(isobyte)
+	isostruct := NewISOStruct("spec1987pos.yml", true)
+	parsed, err := isostruct.Parse(isomsg, true)
+	if err != nil {
+		fmt.Println(err)
+		t.Errorf("parse iso message failed")
+	}
+
+	isomsgUnpacked, err := parsed.ToString()
+	if err != nil {
+		fmt.Println(err)
+		t.Errorf("failed to unpack valid isomsg")
+	}
+	fmt.Println(isomsgUnpacked)
+
+	one := iso8583.NewISOStruct("spec1987pos.yml", false)
+
+	one.AddMTI("0800")
+	one.Tpdu = []byte{96, 0, 24, 0, 0}
+	one.AddField(3, "920000")
+	one.AddField(11, "000299")
+	one.AddField(24, "0018")
+	one.AddField(41, "77000033")
+	one.AddField(62, "48544c45303331303031303031373730303030333330303030303030378ca64de98ca64de9")
+
+	oneString, _ := one.ToString()
+
+	fmt.Println("-------------")
+	fmt.Println("-------------", oneString)
+	if isomsgUnpacked != oneString {
+		t.Errorf("%s should be %s", isomsgUnpacked, oneString)
+	}
+	fmt.Printf("visionet sample 1: %#v, %#v\n%#v", parsed.Mti, parsed.Bitmap, parsed.Elements)
+	fmt.Printf("length msgbyte: %d , msgstring %d", cap(isobyte), len(isomsg))
+	fmt.Println("-------------")
+}
+
+func TestMessageFromSample2(t *testing.T) {
+
+	// one := iso8583.NewISOStruct("spec1987pos.yml", false)
+
+	// one.AddMTI("0800")
+	// one.Tpdu = []byte{96, 0, 24, 0, 0}
+	// one.AddField(1, "2020010000800004")
+	// one.AddField(3, "920000")
+	// one.AddField(11, "000299")
+	// one.AddField(24, "0018")
+	// one.AddField(41, "77000006")
+	// one.AddField(62, "48544c45303331303031303031373730303030333330303030303030378ca64de98ca64de9")
+
+	isobyte, _ := hex.DecodeString("600047000002003038078020C01224000000000000000100200162202928031900510000004700275178632590094319D2207221800F3132303031353930303030313030303132303030303135AD068BB4DB53A96901615F2A0203605F340100820274008407A0000006021010950508000418009A032103199C01009F02060000000001009F03060000000000009F090201009F101C0101A0000000000050D16B00000000000000000000000000000000009F1A0203609F1E0835313838343138349F2608921771745F33F43B9F2701809F3303E0F8C89F34030200009F3501229F360202C19F3704C8C765CA9F4104002001629F5301520160878A33A2D14751188791CD1AE0C1EBB9EF9284CB378D8A516CB73AA5F055A87E6B43CD74C7ABBFB6161BD628BD1B4AF6AA4DC195A6385D909B0BEC55AF93A3C354CABDCE83F6F818AE81DC41D6D0A52410C79B00236B530CBAC17778CDA57FEB5FAD0C2AAE5C2642A49A0DA77DD919172719DA3CFA3C2CB8D3011F7E3B0EECFABE689933DA576C2D62905CD8A100D98BA66F163FAD98BDEF46456CA00D8235280006323030303033")
+
+	// if one.ToString() != string(hexraw) {
+	// 	t.Errorf("%s should be %s", one.ToString(), string(hexraw))
+	// }
+	// fmt.Printf("%#v, %#v\n%#v", one.Mti, one.Bitmap, one.Elements)
+
+	isomsg := string(isobyte)
+	isostruct := NewISOStruct("spec1987pos2.yml", true)
+	parsed, err := isostruct.Parse(isomsg, true)
+	if err != nil {
+		fmt.Println(err)
+		t.Errorf("parse iso message failed")
+	}
+
+	isomsgUnpacked, err := parsed.ToString()
+	if err != nil {
+		fmt.Println(err)
+		t.Errorf("failed to unpack valid isomsg")
+	}
+	fmt.Println(isomsgUnpacked)
+
+	lenbyte := make([]byte, 2)
+	lenbyte[0] = byte(len(isomsg) / 256)
+	lenbyte[1] = byte(len(isomsg))
+	fmt.Printf("len of sample 2: %#v\n", lenbyte)
+
+	// if isomsgUnpacked != isomsg {
+	// 	t.Errorf("%s should be %s", isomsgUnpacked, isomsg)
+	// }
+	fmt.Printf("visionet sample 2: %#v, %#v\n%#v", parsed.Mti, parsed.Bitmap, parsed.Elements)
+}
+func TestMessageFromSample3(t *testing.T) {
+
+	isobyte, _ := hex.DecodeString("600009000002003020078020C0124500000000000000030000035900510001000800375304872000000848D2306226000000362000003737303030303333303030303038373730303030303333F9FF7FA34D1778A001575F2A020360820274008407A0000006021010950508000488009A032103039C01009F02060000000003009F03060000000000009F090201009F101C9F01A00000000088692C8C00000000000000000000000000000000009F1A0203609F1E0835313838343138349F26089839C8F4F17310739F2701809F3303E0F8C89F34030200009F3501229F360203A19F37046669A26B9F4104000003599F5301520011DF0108353138383431383400063430303032300000000000000000")
+
+	isomsg := string(isobyte)
+	isostruct := NewISOStruct("spec1987pos.yml", true)
+	parsed, err := isostruct.Parse(isomsg, true)
+	if err != nil {
+		fmt.Println(err)
+		t.Errorf("parse iso message failed")
+	}
+
+	isomsgUnpacked, err := parsed.ToString()
+	if err != nil {
+		fmt.Println(err)
+		t.Errorf("failed to unpack valid isomsg")
+	}
+	fmt.Println(isomsgUnpacked)
+
+	one := iso8583.NewISOStruct("spec1987pos.yml", false)
+
+	one.AddMTI("0800")
+	one.Tpdu = []byte{96, 0, 24, 0, 0}
+	one.AddField(3, "000000")
+	one.AddField(4, "000000000300")
+	one.AddField(11, "000359")
+	one.AddField(22, "0051")
+	one.AddField(23, "0001")
+	one.AddField(24, "0008")
+	one.AddField(25, "00")
+	one.AddField(35, "5304872000000848d230622600000036200000")
+	one.AddField(41, "77000033")
+	one.AddField(42, "000008770000033")
+	one.AddField(52, "f9ff7fa34d1778a0")
+	one.AddField(55, "5f2a020360820274008407a0000006021010950508000488009a032103039c01009f02060000000003009f03060000000000009f090201009f101c9f01a00000000088692c8c00000000000000000000000000000000009f1a0203609f1e0835313838343138349f26089839c8f4f17310739f2701809f3303e0f8c89f34030200009f3501229f360203a19f37046669a26b9f4104000003599f53015200")
+	one.AddField(58, "df01083531383834313834")
+	one.AddField(62, "48544c45303331303031303031373730303030333330303030303030378ca64de98ca64de9")
+	one.AddField(64, "0000000000000000")
+
+	oneString, _ := one.ToString()
+
+	fmt.Println("-------------")
+	fmt.Printf("length msgbyte: %d , msgstring %d", cap(isobyte), len(isomsg))
+
+	lenbyte := make([]byte, 2)
+	lenbyte[0] = byte(len(isomsg) / 256)
+	lenbyte[1] = byte(len(isomsg))
+	fmt.Printf("len of sample 3: %#v\n", lenbyte)
+
+	if isomsgUnpacked != oneString {
+		t.Errorf("%s should be %s", isomsgUnpacked, oneString)
+	}
+	fmt.Printf("visionet sample 3: %#v, %#v\n%#v", parsed.Mti, parsed.Bitmap, parsed.Elements)
+	// fmt.Println("-------------")
 }
