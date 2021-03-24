@@ -284,7 +284,11 @@ func extractFieldFromElements(spec Spec, field int, str string) (string, string,
 
 	if fieldDescription.LenType == "fixed" {
 
-		extractedField, substr = getFieldValue(fieldDescription.HeaderHex, fieldDescription.MaxLen, fieldDescription.Contain, str)
+		var err error
+		extractedField, substr, err = getFieldValue(fieldDescription.HeaderHex, fieldDescription.MaxLen, fieldDescription.Contain, str)
+		if err != nil {
+			return extractedField, substr, fmt.Errorf("spec error: field %d: %s", field, err.Error())
+		}
 
 	} else {
 		// varianle length fields have their lengths embedded into the string
@@ -318,14 +322,16 @@ func extractFieldFromElements(spec Spec, field int, str string) (string, string,
 			fieldLengthInt = fieldLengthInt * 2
 		}
 
-		extractedField, substr = getFieldValue(fieldDescription.HeaderHex, int(fieldLengthInt), fieldDescription.Contain, tempSubstr)
-
+		extractedField, substr, err = getFieldValue(fieldDescription.HeaderHex, int(fieldLengthInt), fieldDescription.Contain, tempSubstr)
+		if err != nil {
+			return extractedField, substr, err
+		}
 	}
 
 	return extractedField, substr, nil
 }
 
-func getFieldValue(headerHex bool, maxLen int, contain string, str string) (extractedField string, substr string) {
+func getFieldValue(headerHex bool, maxLen int, contain string, str string) (extractedField string, substr string, err error) {
 	if headerHex {
 		var length int
 		if maxLen%2 != 0 {
@@ -339,6 +345,10 @@ func getFieldValue(headerHex bool, maxLen int, contain string, str string) (extr
 			length = length * 2
 		}
 
+		if len(str) < length {
+			return extractedField, substr, fmt.Errorf("could not slice string")
+		}
+
 		extractedFieldTemp := str[0:length]
 		extractedFieldTemp2 := hex.EncodeToString([]byte(extractedFieldTemp))
 		extractedField = string(extractedFieldTemp2)
@@ -349,7 +359,7 @@ func getFieldValue(headerHex bool, maxLen int, contain string, str string) (extr
 		substr = str[maxLen:len(str)]
 	}
 
-	return extractedField, substr
+	return extractedField, substr, nil
 }
 
 func unpackElements(bitmap []int64, elements string, spec Spec) (ElementsType, error) {

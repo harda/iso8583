@@ -259,7 +259,37 @@ func TestMessageFromSample2(t *testing.T) {
 	// }
 	fmt.Printf("visionet sample 2: %#v, %#v\n%#v", parsed.Mti, parsed.Bitmap, parsed.Elements)
 }
+
 func TestMessageFromSample3(t *testing.T) {
+
+	isobyte, _ := hex.DecodeString("60001800000800202001000080000492000000014100183737303030303036003748544c45303331303031303031373730303030303630303030303030378ca64de98ca64de9")
+
+	isomsg := string(isobyte)
+	isostruct := NewISOStruct("spec1987pos.yml", true)
+	parsed, err := isostruct.Parse(isomsg, true)
+	if err != nil {
+		fmt.Println(err)
+		t.Errorf("parse iso message failed")
+	}
+
+	isomsgUnpacked, err := parsed.ToString()
+	if err != nil {
+		fmt.Println(err)
+		t.Errorf("failed to unpack valid isomsg")
+	}
+	fmt.Println(isomsgUnpacked)
+
+	lenbyte := make([]byte, 2)
+	lenbyte[0] = byte(len(isomsg) / 256)
+	lenbyte[1] = byte(len(isomsg))
+	fmt.Printf("len of sample 3a: %#v\n", lenbyte)
+
+	// if isomsgUnpacked != isomsg {
+	// 	t.Errorf("%s should be %s", isomsgUnpacked, isomsg)
+	// }
+	fmt.Printf("visionet sample 3a: %#v, %#v\n%#v", parsed.Mti, parsed.Bitmap, parsed.Elements)
+}
+func TestMessageFromSample4(t *testing.T) {
 
 	isobyte, _ := hex.DecodeString("600009000002003020078020C0124500000000000000030000035900510001000800375304872000000848D2306226000000362000003737303030303333303030303038373730303030303333F9FF7FA34D1778A001575F2A020360820274008407A0000006021010950508000488009A032103039C01009F02060000000003009F03060000000000009F090201009F101C9F01A00000000088692C8C00000000000000000000000000000000009F1A0203609F1E0835313838343138349F26089839C8F4F17310739F2701809F3303E0F8C89F34030200009F3501229F360203A19F37046669A26B9F4104000003599F5301520011DF0108353138383431383400063430303032300000000000000000")
 
@@ -306,11 +336,11 @@ func TestMessageFromSample3(t *testing.T) {
 	lenbyte := make([]byte, 2)
 	lenbyte[0] = byte(len(isomsg) / 256)
 	lenbyte[1] = byte(len(isomsg))
-	fmt.Printf("len of sample 3: %#v\n", lenbyte)
+	fmt.Printf("len of sample 4: %#v\n", lenbyte)
 
 	if isomsgUnpacked != oneString {
 		t.Errorf("%s should be %s", isomsgUnpacked, oneString)
 	}
-	fmt.Printf("visionet sample 3: %#v, %#v\n%#v", parsed.Mti, parsed.Bitmap, parsed.Elements)
+	fmt.Printf("visionet sample 4: %#v, %#v\n%#v", parsed.Mti, parsed.Bitmap, parsed.Elements)
 	// fmt.Println("-------------")
 }
