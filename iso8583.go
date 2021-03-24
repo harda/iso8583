@@ -180,6 +180,10 @@ func (iso *IsoStruct) packElements() (string, error) {
 
 func extractTpdu(rest string) ([]byte, string, error) {
 
+	if len(rest) < 5 {
+		return nil, "", fmt.Errorf("could not slice %d string of %d\n", len(rest), 5)
+	}
+
 	frontHex := rest[0:5]
 	tpdu := []byte(frontHex)
 	msg := rest[5:len(rest)]
