@@ -345,6 +345,7 @@ func getFieldValue(headerHex bool, maxLen int, contain string, str string) (extr
 			length = length * 2
 		}
 
+		fmt.Printf("verified length of str %d to be sliced %d\n", len(str), length)
 		if len(str) < length {
 			return extractedField, substr, fmt.Errorf("could not slice string")
 		}
