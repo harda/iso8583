@@ -223,6 +223,10 @@ func extractBitmap(rest string, isHex bool) ([]int64, string, error) {
 	var inDec []byte
 	var err error
 
+	if len(rest) < 1 {
+		return bitmap, elementsString, fmt.Errorf("bitmap length = 0, no bitmap to be processed")
+	}
+
 	if !isHex {
 		// remove first two characters
 		frontHex := rest[0:2]
