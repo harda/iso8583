@@ -195,11 +195,21 @@ func extractTpdu(rest string) ([]byte, string, error) {
 func extractMTI(str string, isHex bool) (MtiType, string) {
 
 	if !isHex {
+
+		if len(str) < 4 {
+			return MtiType{}, ""
+		}
+
 		mti := str[0:4]
 		rest := str[4:len(str)]
 
 		return MtiType{mti: mti}, rest
 	} else {
+
+		if len(str) < 2 {
+			return MtiType{}, ""
+		}
+
 		mti := hex.EncodeToString([]byte(str[0:2]))
 		rest := str[2:len(str)]
 
