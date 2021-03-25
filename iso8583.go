@@ -56,10 +56,12 @@ func (iso *IsoStruct) ToString() (string, error) {
 			bitmapByte, _ = hex.DecodeString(bitmapString)
 		}
 
+		var isomsgByte []byte
 		if len(iso.Tpdu) > 0 {
-			isomsgByte := append(mtiByte, iso.Tpdu, bitmapByte)
+			isomsgByte = append(iso.Tpdu, bitmapByte...)
+			isomsgByte = append(mtiByte, isomsgByte...)
 		} else {
-			isomsgByte := append(mtiByte, bitmapByte...)
+			isomsgByte = append(mtiByte, bitmapByte...)
 		}
 
 		return string(isomsgByte) + elementsStr, nil
