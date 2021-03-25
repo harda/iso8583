@@ -114,12 +114,12 @@ func (iso *IsoStruct) Parse(i string, useTpdu bool) (IsoStruct, error) {
 			fmt.Println(err.Error())
 		}
 
-		q.Tpdu = tpdu
+		iso.Tpdu = tpdu
 
 	} else {
 		msg = i
 	}
-	fmt.Printf("tpdu: %v", tpdu)
+	fmt.Printf("tpdu: %v\n", iso.Tpdu)
 
 	mti, rest := extractMTI(msg, spec.fields[0].HeaderHex)
 	bitmap, elementString, err := extractBitmap(rest, spec.fields[1].HeaderHex)
