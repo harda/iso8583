@@ -61,6 +61,7 @@ func (iso *IsoStruct) ToString() (string, error) {
 	}
 
 	if len(iso.Tpdu) > 0 {
+		fmt.Printf("create message with tpdu %v\n", iso.Tpdu)
 		str = string(iso.Tpdu) + iso.Mti.String() + bitmapString + elementsStr
 	} else {
 		str = iso.Mti.String() + bitmapString + elementsStr
