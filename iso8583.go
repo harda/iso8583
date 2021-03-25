@@ -57,7 +57,7 @@ func (iso *IsoStruct) ToString() (string, error) {
 		}
 
 		if len(iso.Tpdu) > 0 {
-			isomsgByte := append(mtiByte, iso.Tpdu, bitmapByte...)
+			isomsgByte := append(mtiByte, iso.Tpdu, bitmapByte)
 		} else {
 			isomsgByte := append(mtiByte, bitmapByte...)
 		}
