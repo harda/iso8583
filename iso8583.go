@@ -58,8 +58,8 @@ func (iso *IsoStruct) ToString() (string, error) {
 
 		var isomsgByte []byte
 		if len(iso.Tpdu) > 0 {
-			isomsgByte = append(iso.Tpdu, bitmapByte...)
-			isomsgByte = append(mtiByte, isomsgByte...)
+			isomsgByte = append(mtiByte, bitmapByte...)
+			isomsgByte = append(iso.Tpdu, isomsgByte...)
 		} else {
 			isomsgByte = append(mtiByte, bitmapByte...)
 		}
