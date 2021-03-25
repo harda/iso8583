@@ -60,7 +60,11 @@ func (iso *IsoStruct) ToString() (string, error) {
 		return string(isomsgByte) + elementsStr, nil
 	}
 
-	str = iso.Mti.String() + bitmapString + elementsStr
+	if len(iso.Tpdu) > 0 {
+		str = string(iso.Tpdu) + iso.Mti.String() + bitmapString + elementsStr
+	} else {
+		str = iso.Mti.String() + bitmapString + elementsStr
+	}
 	return str, nil
 }
 
@@ -109,6 +113,9 @@ func (iso *IsoStruct) Parse(i string, useTpdu bool) (IsoStruct, error) {
 		if err != nil {
 			fmt.Println(err.Error())
 		}
+
+		q.Tpdu = tpdu
+
 	} else {
 		msg = i
 	}
