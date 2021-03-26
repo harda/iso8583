@@ -104,7 +104,7 @@ func (iso *IsoStruct) RemoveField(field int64) error {
 		return fmt.Errorf("expected field to be between %d and %d found %d instead", 2, len(iso.Bitmap), field)
 	}
 	iso.Bitmap[field-1] = 0
-	iso.Elements.elements[field] = ""
+	delete(iso.Elements.elements, field)
 	return nil
 }
 

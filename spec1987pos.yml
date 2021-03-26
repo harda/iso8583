@@ -325,6 +325,8 @@
   Label: Reserved national
   LenType: lllvar
   MaxLen: 999
+  HeaderHex: true
+  Contain: string
 61:
   ContentType: ans
   Label: Reserved private
@@ -342,6 +344,8 @@
   Label: Reserved private
   LenType: lllvar
   MaxLen: 999
+  HeaderHex: true
+  Contain: string
 64:
   ContentType: "b"
   Label: Message authentication code (MAC)
