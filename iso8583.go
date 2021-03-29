@@ -176,10 +176,17 @@ func (iso *IsoStruct) packElements() (string, error) {
 				if err != nil {
 					return str, err
 				}
-				actualLength := len(elementsMap[field])
-				paddedLength := leftPad(strconv.Itoa(actualLength), int(lengthType), "0")
 
 				if fieldDescription.HeaderHex {
+					actualLength := len(elementsMap[field]) / 2
+
+					lenVar := int(lengthType)
+					if lenVar == 3 {
+						lenVar = 4
+					}
+
+					paddedLength := leftPad(strconv.Itoa(actualLength), lenVar, "0")
+
 					strtemp := (paddedLength + elementsMap[field])
 					strByte, _ := hex.DecodeString(strtemp)
 					str = str + string(strByte)

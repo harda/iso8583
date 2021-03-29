@@ -271,6 +271,40 @@ func TestMessageFromSample3(t *testing.T) {
 		fmt.Println(err)
 		t.Errorf("parse iso message failed")
 	}
+	parsed.RemoveField(58)
+
+	isomsgUnpacked, err := parsed.ToString()
+	if err != nil {
+		fmt.Println(err)
+		t.Errorf("failed to unpack valid isomsg")
+	}
+	// fmt.Println("msg unpacked: ", isomsgUnpacked)
+	fmt.Println("msg unpacked: ", hex.EncodeToString([]byte(isomsgUnpacked)))
+
+	lenbyte := make([]byte, 2)
+	lenbyte[0] = byte(len(isomsg) / 256)
+	lenbyte[1] = byte(len(isomsg))
+	fmt.Printf("len of sample 3a: %#v\n", lenbyte)
+
+	// if isomsgUnpacked != isomsg {
+	// 	t.Errorf("%s should be %s", isomsgUnpacked, isomsg)
+	// }
+	fmt.Printf("visionet sample 3a: %#v, %#v\n%#v", parsed.Mti, parsed.Bitmap, parsed.Elements)
+	fmt.Println("f62: ", parsed.Elements.elements[62])
+	fmt.Printf("\n\nlength %d, %d, %d, %d\n", len(isobyte), len(isomsg), len([]byte(isomsgUnpacked)), len(isomsgUnpacked))
+}
+
+func TestMessageFromSampleLogonResponse(t *testing.T) {
+
+	isobyte, _ := hex.DecodeString("60000000180810202001000280000292000000012800184c4537373030303030360044004232324230204b4559444c20494e4620494e56414c49442020202020202020202020202020202020202020")
+
+	isomsg := string(isobyte)
+	isostruct := NewISOStruct("spec1987pos3.yml", true)
+	parsed, err := isostruct.Parse(isomsg, true)
+	if err != nil {
+		fmt.Println(err)
+		t.Errorf("parse iso message failed")
+	}
 
 	isomsgUnpacked, err := parsed.ToString()
 	if err != nil {
@@ -282,13 +316,43 @@ func TestMessageFromSample3(t *testing.T) {
 	lenbyte := make([]byte, 2)
 	lenbyte[0] = byte(len(isomsg) / 256)
 	lenbyte[1] = byte(len(isomsg))
-	fmt.Printf("len of sample 3a: %#v\n", lenbyte)
+	fmt.Printf("len of sample respon logon: %#v\n", lenbyte)
 
 	// if isomsgUnpacked != isomsg {
 	// 	t.Errorf("%s should be %s", isomsgUnpacked, isomsg)
 	// }
-	fmt.Printf("visionet sample 3a: %#v, %#v\n%#v", parsed.Mti, parsed.Bitmap, parsed.Elements)
+	fmt.Printf("visionet sample respon logon: %#v, %#v\n%#v", parsed.Mti, parsed.Bitmap, parsed.Elements)
 }
+func TestMessageFromSample4a(t *testing.T) {
+
+	isobyte, _ := hex.DecodeString("600032000005002020010000c00052920000000155003237373030303030363030303030383737303030303030360011df0108353134363333393500063030303030320090303036303030303030383430323030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030303030")
+
+	isomsg := string(isobyte)
+	isostruct := NewISOStruct("spec1987pos3.yml", true)
+	parsed, err := isostruct.Parse(isomsg, true)
+	if err != nil {
+		fmt.Println(err)
+		t.Errorf("parse iso message failed")
+	}
+
+	isomsgUnpacked, err := parsed.ToString()
+	if err != nil {
+		fmt.Println(err)
+		t.Errorf("failed to unpack valid isomsg")
+	}
+	fmt.Println(isomsgUnpacked)
+
+	lenbyte := make([]byte, 2)
+	lenbyte[0] = byte(len(isomsg) / 256)
+	lenbyte[1] = byte(len(isomsg))
+	fmt.Printf("len of sample 4a: %#v\n", lenbyte)
+
+	// if isomsgUnpacked != isomsg {
+	// 	t.Errorf("%s should be %s", isomsgUnpacked, isomsg)
+	// }
+	fmt.Printf("visionet sample 4a: %#v, %#v\n%#v", parsed.Mti, parsed.Bitmap, parsed.Elements)
+}
+
 func TestMessageFromSample4(t *testing.T) {
 
 	isobyte, _ := hex.DecodeString("600009000002003020078020C0124500000000000000030000035900510001000800375304872000000848D2306226000000362000003737303030303333303030303038373730303030303333F9FF7FA34D1778A001575F2A020360820274008407A0000006021010950508000488009A032103039C01009F02060000000003009F03060000000000009F090201009F101C9F01A00000000088692C8C00000000000000000000000000000000009F1A0203609F1E0835313838343138349F26089839C8F4F17310739F2701809F3303E0F8C89F34030200009F3501229F360203A19F37046669A26B9F4104000003599F5301520011DF0108353138383431383400063430303032300000000000000000")
