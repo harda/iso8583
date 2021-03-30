@@ -177,8 +177,13 @@ func (iso *IsoStruct) packElements() (string, error) {
 					return str, err
 				}
 
+				fieldLen := len(elementsMap[field])
+				if fieldDescription.Contain != "string" {
+					fieldLen = fieldLen * 2
+				}
+
 				if fieldDescription.HeaderHex {
-					actualLength := len(elementsMap[field]) / 2
+					actualLength := fieldLen / 2
 
 					lenVar := int(lengthType)
 					if lenVar == 3 {
